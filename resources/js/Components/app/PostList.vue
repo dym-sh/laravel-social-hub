@@ -76,9 +76,11 @@ const post2 = {
 </script>
 
 <template>
-  <div>
-    <div>
+  <div class=" h-full overflow-hidden flex flex-col">
+    <div class="overflow-auto space-y-4">
       <PostItem :post="post1" />
+      <PostItem :post="post2" />
+      <PostItem :post="post2" />
       <PostItem :post="post2" />
     </div>
     <div>
