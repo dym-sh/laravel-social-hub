@@ -1,6 +1,10 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
-import GroupItem from '@/Components/App/GroupItem.vue';
+import GroupList from '@/Components/app/GroupList.vue';
+import FollowingList from '@/Components/app/FollowingList.vue';
+import CreatePost from '@/Components/app/CreatePost.vue';
+import PostList from '@/Components/app/PostList.vue';
+
 
 defineProps({
 });
@@ -16,32 +20,16 @@ function handleImageError() {
 <template>
     <Head title="Social Hub" />
 
-    <div class="w-full grid grid-cols-12 gap-3">
-        <div class="col-span-3 py-6 px-3">
-            <h2 class="text-2xl font-bold">My Groups</h2>
-            <div class=" py-8">
-                <div v-if="false" class="text-gray-400 flex text-center">
-                    You haven't joined any group
-                </div>
-                <div v-else>
-                    <GroupItem
-                        image="https://picsum.photos/100"
-                        title="Laravel Developers"
-                        description="group for a php framework"
-                        />
-                    <GroupItem
-                        image="https://picsum.photos/100"
-                        title="Vue.js Developers"
-                        description="group for a JS framework"
-                        />
-                </div>
-            </div>
+    <div class="w-full grid grid-cols-12 gap-3 mb-3">
+        <div class="col-span-3 py-6">
+            <GroupList />
         </div>
         <div class="col-span-6">
-            Posts
+            <CreatePost />
+            <PostList />
         </div>
-        <div class="col-span-3">
-            Followers
+        <div class="col-span-3 py-6">
+            <FollowingList />
         </div>
     </div>
 
