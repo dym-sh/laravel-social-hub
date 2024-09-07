@@ -5,5 +5,6 @@ building a laravel webapp, following a tutorial https://www.youtube.com/watch?v=
 
 ## tech stack
 
-- laravel
+- laravel.php
 - vue.js
+- tailwind.css
