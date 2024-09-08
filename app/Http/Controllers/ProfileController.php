@@ -21,6 +21,7 @@ class ProfileController extends Controller
         return Inertia::render('Profile/View', [
             'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => session('status'),
+            'success' => session('success'),
             'user' => new UserResource( $user ),
         ]);
     }
@@ -77,6 +78,8 @@ class ProfileController extends Controller
          */
         $cover = $data['cover'] ?? null;
 
+        $success = '';
+
         if($cover) {
             if($user->cover_path) {
                 Storage::disk('public')->delete($user->cover_path);
@@ -85,9 +88,20 @@ class ProfileController extends Controller
 
             $user->update(['cover_path' => $path]);
 
-            session('success', 'cover image updated');
-
-            return back()->with('status', 'cover-image-updated');
+            $success = 'Cover-image has been updated';
         }
+
+        if($avatar) {
+            if($user->avatar_path) {
+                Storage::disk('public')->delete($user->avatar_path);
+            }
+            $path = $avatar->store( 'user-'.$user->id, 'public' );
+
+            $user->update(['avatar_path' => $path]);
+
+            $success = 'Avatar-image has been updated';
+        }
+
+        return back()->with('status', $success);
     }
 }

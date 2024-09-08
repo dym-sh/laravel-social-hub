@@ -10,7 +10,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import { computed } from 'vue';
 
 import { XMarkIcon } from '@heroicons/vue/24/solid'
-import { CheckCircleIcon } from '@heroicons/vue/24/outline'
+import { CheckCircleIcon, CameraIcon } from '@heroicons/vue/24/outline'
 
 import { useForm } from '@inertiajs/vue3'
 
@@ -19,7 +19,6 @@ const imagesForm = useForm({
   cover: null,
 })
 
-const authUser = usePage().props.auth.user;
 
 const props = defineProps({
   errors: Object,
@@ -29,17 +28,23 @@ const props = defineProps({
   status: {
       type: String,
   },
+  success: {
+      type: String,
+  },
   user: {
     type: Object
   }
 });
 
+const showNotification = ref(true)
+let coverImageSrc = ref('')
+let avatarImageSrc = ref('')
+
+const authUser = usePage().props.auth.user;
+
 const isMyProfile = computed( () => {
   return authUser && authUser.id === props.user.id
 })
-
-const showNotification = ref(true)
-let coverImageSrc = ref('')
 
 
 function onCoverChange(event) {
@@ -53,16 +58,43 @@ function onCoverChange(event) {
   }
 }
 
+function onAvatarChange(event) {
+  imagesForm.avatar = event.target.files[0]
+  if( imagesForm.avatar) {
+    const reader = new FileReader()
+    reader.onload = () => {
+      avatarImageSrc.value = reader.result
+    }
+    reader.readAsDataURL(imagesForm.avatar)
+  }
+}
 
-function cancelCoverImage(){
+
+function resetCoverImage(){
   imagesForm.cover = null
   coverImageSrc.value = null
 }
 function submitCoverImage(){
   console.log(imagesForm.cover)
-  imagesForm.post( route('profile.updateImage'), {
+  imagesForm.post( route('profile.updateImages'), {
     onSuccess: () => {
-      cancelCoverImage()
+      resetCoverImage()
+      setTimeout( () => {
+        showNotification.value = false
+      }, 3000 )
+    }
+  })
+}
+
+function resetAvatarImage(){
+  imagesForm.avatar = null
+  avatarImageSrc.value = null
+}
+function submitAvatarImage(){
+  console.log(imagesForm.avatar)
+  imagesForm.post( route('profile.updateImages'), {
+    onSuccess: () => {
+      resetAvatarImage()
       setTimeout( () => {
         showNotification.value = false
       }, 3000 )
@@ -76,9 +108,9 @@ function submitCoverImage(){
 <template>
 <AuthenticatedLayout>
   <div class="max-w-[768px] mx-auto h-full overflow-auto">
-    <div v-show="showNotification && status === 'cover-image-updated'"
+    <div v-show="showNotification && success"
       class="my-2 py-2 px-3 font-medium text-sm bg-emerald-500 text-white">
-      Cover-image has been uploaded
+      {{ success }}
     </div>
     <div v-if="errors.cover"
       class="my-2 py-2 px-3 font-medium text-sm bg-red-400 text-white">
@@ -92,10 +124,7 @@ function submitCoverImage(){
         <button
           v-if="!coverImageSrc"
           class=" bg-gray-50 hover:bg-gray-100 text-gray-800 py-1 px-2 text-xs flex items-center opacity-0 group-hover:opacity-100">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-3 mr-2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
-          </svg>
+          <CameraIcon class="size-3 mr-2" />
           Update cover image
           <input type="file"
             @change="onCoverChange"
@@ -103,8 +132,8 @@ function submitCoverImage(){
         </button>
         <div v-else class="flex gap-2 bg-white p-2  opacity-0 group-hover:opacity-100">
           <button
-            @click="cancelCoverImage"
-            class=" bg-gray-50 hover:bg-gray-100 text-gray-800 py-1 px-2 text-xs flex items-center ">
+            @click="resetCoverImage"
+            class=" bg-gray-50 hover:bg-gray-100 text-gray-800 py-1 px-2 text-xs flex items-center">
             <XMarkIcon class="size-3 mr-2" />
             Cancel
           </button>
@@ -118,10 +147,31 @@ function submitCoverImage(){
       </div>
     </div>
 
-    <div class="flex ">
-      <img class="ml-[48px] w-[128px] h-[128px] -mt-[64px]"
-      src="https://icon-library.com/images/avatar-icon-images/avatar-icon-images-4.jpg">
-
+    <div class="flex">
+      <div class="flex items-center justify-center relative group/avatar -mt-[64px] ml-[48px] w-[128px] h-[128px] rounded-full ">
+        <img class="w-full h-full object-cover rounded-full "
+        :src="avatarImageSrc || user.avatar_path || '/img/avatar.jpg'">
+        <button
+          v-if="!avatarImageSrc"
+          class="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center group-hover/avatar:opacity-100 opacity-0  bg-black/50 text-gray-200 rounded-full">
+          <CameraIcon class="size-8" />
+          <input type="file"
+            @change="onAvatarChange"
+            class="absolute left-0 bottom-0 right-0 top-0 opacity-0 cursor-pointer z-2">
+        </button>
+        <div v-else class="absolute top-1 right-0 flex flex-col gap-2">
+          <button
+            @click="resetAvatarImage"
+            class=" bg-red-500/80 w-7 h-7 flex items-center justify-center text-white rounded-full">
+            <XMarkIcon class="size-5" />
+          </button>
+          <button
+            @click="submitAvatarImage"
+            class=" bg-emerald-500/80 w-7 h-7 flex items-center justify-center text-white rounded-full">
+            <CheckCircleIcon class="size-5" />
+          </button>
+        </div>
+      </div>
       <div class="flex-1 p-4 flex justify-between items-center">
         <h2 class="font-bold text-lg">{{ user.name }}</h2>
         <PrimaryButton v-if="isMyProfile">
