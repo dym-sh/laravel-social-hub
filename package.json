@@ -18,6 +18,7 @@
         "vue": "^3.4.0"
     },
     "dependencies": {
-        "@headlessui/vue": "^0.0.0-insiders.cb86665"
+        "@headlessui/vue": "^0.0.0-insiders.cb86665",
+        "@heroicons/vue": "^2.1.5"
     }
 }
