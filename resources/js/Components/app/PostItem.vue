@@ -16,7 +16,7 @@ function isImage( attachment ) {
     <div class="flex items-center gap-2">
       <a href="javascript:void(0)">
         <img
-          :src="post.user.avatar"
+          :src="post.user.avatar_path"
           class="w-[32px] rounded-full transition-all border-2 hover:border-blue-400"
           >
       </a>
@@ -34,14 +34,16 @@ function isImage( attachment ) {
     <div class="mb-3">
       <Disclosure v-slot="{ open }">
         <div v-if="!open" v-html="post.body.substring(0, 100)"></div>
-        <DisclosurePanel class="px-4 pb-2 pt-4">
-          <div v-html="post.body"></div>
-        </DisclosurePanel>
-        <div class="flex justify-end">
-          <DisclosureButton>
-            <span class="text-blue-400 hover:underline">{{ open ? 'Read less' : 'Read more' }}</span>
-          </DisclosureButton>
-        </div>
+        <template v-if="post.body.length >= 200">
+          <DisclosurePanel class="px-4 pb-2 pt-4">
+            <div v-html="post.body"></div>
+          </DisclosurePanel>
+          <div class="flex justify-end">
+            <DisclosureButton>
+              <span class="text-blue-400 hover:underline">{{ open ? 'Read less' : 'Read more' }}</span>
+            </DisclosureButton>
+          </div>
+        </template>
       </Disclosure>
     </div>
     <div class="grid grid-cols-3 gap-3">
