@@ -25,14 +25,22 @@ onMounted(() => {
 defineExpose({ focus: () => input.value.focus() });
 
 const emit = defineEmits([ 'update:model.value' ])
-function onInputChange($event) {
-  emit('update:model.value', $event.target.value)
 
+function adjustHeight() {
   if(props.autoResize){
     input.value.style.height = 'auto'
     input.value.style.height = input.value.scrollHeight + 'px'
   }
 }
+function onInputChange($event) {
+  emit('update:model.value', $event.target.value)
+  adjustHeight()
+}
+
+
+onMounted( () => {
+  adjustHeight()
+})
 </script>
 
 <template>

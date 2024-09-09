@@ -1,5 +1,7 @@
 <script setup>
+import { ref } from 'vue';
 import PostItem from './PostItem.vue';
+import PostModal from './PostModal.vue';
 
 defineProps({
   posts: Array
@@ -58,20 +60,27 @@ const post2 = {
   },
   created_at: '2024-01-01 01:01'
 }
+
+
+const showEditModal = ref( false )
+const editPost = ref( {} )
+
+function openEditModal(post) {
+  editPost.value = post
+  showEditModal.value = true
+}
 </script>
 
 <template>
-  <div class=" h-full overflow-hidden flex flex-col">
-    <div class="overflow-auto space-y-4">
-      <PostItem
-        v-for="post of posts"
-        :key="post.id"
-        :post="post"
-        />
-    </div>
-    <div>
+  <div class="overflow-auto">
+    <PostItem
+      v-for="post of posts"
+      :key="post.id"
+      :post="post"
+      @editClick="openEditModal"
+      />
 
-    </div>
+      <PostModal :post="editPost" v-model="showEditModal" />
   </div>
 </template>
 
