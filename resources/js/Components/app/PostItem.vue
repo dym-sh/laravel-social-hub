@@ -3,20 +3,15 @@ import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import { PencilIcon, TrashIcon, EllipsisVerticalIcon } from '@heroicons/vue/20/solid'
 
-import { ref } from 'vue';
 import PostUserHeader from './PostUserHeader.vue';
 import { router, useForm } from '@inertiajs/vue3';
+import { isImage } from '@/helpers';
 
 const props = defineProps({
   post: Object
 })
 
 const emit = defineEmits(['editClick'])
-
-function isImage( attachment ) {
-  const mime = attachment.mime.split('/')
-  return 'image' === mime[0].toLowerCase()
-}
 
 function openEditModal() {
   emit('editClick', props.post)
@@ -117,7 +112,7 @@ function deletePost() {
         </template>
       </Disclosure>
     </div>
-    <div class="grid grid-cols-3 gap-3">
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
       <template v-for="attachment of post.attachments">
         <div class="group bg-blue-100 aspect-square flex flex-col items-center justify-center text-center text-gray-500 relative">
 
