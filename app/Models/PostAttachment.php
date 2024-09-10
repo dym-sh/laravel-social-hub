@@ -8,4 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class PostAttachment extends Model
 {
     use HasFactory;
+
+    // const updated_at = null;
+
+    protected $fillable = [
+        'post_id',
+        'name',
+        'path',
+        'mime',
+        'size',
+        'created_by',
+    ];
 }
