@@ -11,7 +11,21 @@ import InputTextarea from '../InputTextarea.vue';
 import PostUserHeader from './PostUserHeader.vue';
 import { XMarkIcon } from '@heroicons/vue/20/solid'
 import { useForm } from '@inertiajs/vue3';
+import { ClassicEditor, Bold, Essentials, Italic, Paragraph } from 'ckeditor5';
+import 'ckeditor5/ckeditor5.css';
 
+const editor = ClassicEditor
+const editorConfig = {
+  toolbar: {
+    items: [ 'heading'
+      , '|', 'bold', 'italic'
+      , '|', 'link', 'bulletedList', 'numberedList'
+      , '|', 'outdent', 'indent',
+      , '|', 'blockQuote'
+    ],
+  },
+  plugins: [ Bold, Essentials, Italic, Paragraph ],
+}
 
 const props = defineProps({
   post: {
@@ -31,7 +45,6 @@ const emit = defineEmits(['update:modelValue'])
 watch(()=>props.post, () => {
   form.id = props.post.id
   form.body = props.post.body
-
 })
 
 const form = useForm({
@@ -102,7 +115,12 @@ function submit() {
                 </DialogTitle>
                 <div class="p-4">
                   <PostUserHeader :post="post" :show-time="false" class="mb-4"/>
-                  <InputTextarea v-model="form.body" class="mb-3 w-full" />
+                  <ckeditor
+                    v-model="form.body"
+                    :editor="editor"
+                    :config="editorConfig"
+                  />
+                  <!-- <InputTextarea v-model="form.body" class="mb-3 w-full" /> -->
                 </div>
 
                 <div class="py-2 px-4">
