@@ -17,11 +17,12 @@ import 'ckeditor5/ckeditor5.css';
 const editor = ClassicEditor
 const editorConfig = {
   toolbar: {
-    items: [ 'heading'
-      , '|', 'bold', 'italic'
-      , '|', 'link', 'bulletedList', 'numberedList'
-      , '|', 'outdent', 'indent',
-      , '|', 'blockQuote'
+    items: [
+      'bold', 'italic',
+      //'heading'
+      // , '|', 'link', 'bulletedList', 'numberedList'
+      // , '|', 'outdent', 'indent',
+      // , '|', 'blockQuote'
     ],
   },
   plugins: [ Bold, Essentials, Italic, Paragraph ],
@@ -58,13 +59,23 @@ function closeModal() {
 }
 
 function submit() {
-
-  form.put(route('post.update', props.post.id), {
-    preserveScroll: true,
-    onSuccess: () => {
-      show.value = false
-    }
-  })
+  if( form.id ) {
+    form.put(route('post.update', props.post.id), {
+      preserveScroll: true,
+      onSuccess: () => {
+        show.value = false
+        form.reset()
+      }
+    })
+  } else {
+    form.post(route('post.create'), {
+      preserveScroll: true,
+      onSuccess: () => {
+        show.value = false
+        form.reset()
+      }
+    })
+  }
 }
 
 </script>
@@ -106,7 +117,7 @@ function submit() {
                   as="h3"
                   class="px-4 py-2 font-medium leading-6 text-gray-900 bg-gray-100 flex justify-between items-center"
                 >
-                  Update post
+                  {{ form.id ? 'Update post' : 'Create Post' }}
                   <button
                     @click="show = false"
                     class="h-8 w-8 rounded-full hover:bg-black/5 transition flex items-center justify-center">
