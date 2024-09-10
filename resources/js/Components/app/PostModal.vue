@@ -9,7 +9,7 @@ import {
 } from '@headlessui/vue'
 import InputTextarea from '../InputTextarea.vue';
 import PostUserHeader from './PostUserHeader.vue';
-import { XMarkIcon } from '@heroicons/vue/24/solid'
+import { ArrowUturnLeftIcon, XMarkIcon } from '@heroicons/vue/24/solid'
 import { useForm } from '@inertiajs/vue3';
 import { ClassicEditor, Bold, Essentials, Italic, Paragraph } from 'ckeditor5';
 import 'ckeditor5/ckeditor5.css';
@@ -39,6 +39,15 @@ const editorConfig = {
 } */
 const attachmentFiles = ref([])
 
+const computedAttachments = computed(
+  () => {
+    return [
+      ...attachmentFiles.value
+      , ...(props.post.attachments || [])
+    ]
+  }
+)
+
 const props = defineProps({
   post: {
     type: Object,
@@ -52,21 +61,23 @@ const show = computed({
   set: (value) => emit('update:modelValue', value)
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'hide'])
 
 watch(()=>props.post, () => {
-  form.id = props.post.id
-  form.body = props.post.body
+    form.body = props.post.body || ''
 })
 
 const form = useForm({
   id: null,
   body: '',
-  attachments: []
+  attachments: [],
+  deleted_file_ids: [],
+  _method: 'POST',
 })
 
 function closeModal() {
   show.value = false
+  emit('hide')
   resetModal()
 }
 
@@ -74,13 +85,19 @@ function resetModal() {
   emit('update:modelValue', false)
   form.reset()
   attachmentFiles.value = []
+  if(props.post.attachments) {
+    props.post.attachments.forEach(file => {
+      file.deleted = false
+    });
+  }
 
 }
 
 function submit() {
   form.attachments = attachmentFiles.value.map( myFile => myFile.file)
-  if( form.id ) {
-    form.put(route('post.update', props.post.id), {
+  if( props.post.id ) {
+    form._method = 'PUT'
+    form.post(route('post.update', props.post.id), {
       preserveScroll: true,
       onSuccess: () => {
         closeModal()
@@ -127,8 +144,21 @@ async function readFile(file) {
   })
 }
 function removeFile (myFile) {
-  attachmentFiles.value =
-  attachmentFiles.value.filter( f => f !== myFile )
+  if( myFile.file ) {
+    attachmentFiles.value
+      = attachmentFiles.value
+          .filter( f => f !== myFile )
+  } else {
+    form.deleted_file_ids.push(myFile.id )
+    myFile.deleted = true
+  }
+}
+
+function undoDelete(myFile) {
+  myFile.deleted = false
+  form.deleted_file_ids
+    = form.deleted_file_ids
+      .filter(id => id !== myFile.id )
 }
 </script>
 
@@ -169,9 +199,9 @@ function removeFile (myFile) {
                   as="h3"
                   class="px-4 py-2 font-medium leading-6 text-gray-900 bg-gray-100 flex justify-between items-center"
                 >
-                  {{ form.id ? 'Update post' : 'Create Post' }}
+                  {{ post.id ? 'Update post' : 'Create Post' }}
                   <button
-                    @click="show = false"
+                    @click="closeModal"
                     class="h-8 w-8 rounded-full hover:bg-black/5 transition flex items-center justify-center">
                     <XMarkIcon class="size-4"/>
                   </button>
@@ -185,12 +215,20 @@ function removeFile (myFile) {
                   />
 
                   <div class="grid gap-3 my-3" :class="[
-                      1 === attachmentFiles.length
+                      1 === computedAttachments.length
                       ? 'grid-cols-1'
                       : 'grid-cols-2'
                     ]">
-                    <template v-for="(myFile, ind) of attachmentFiles">
+                    <template v-for="(myFile, ind) of computedAttachments">
                       <div class="group bg-blue-100 aspect-square flex flex-col items-center justify-center text-center text-gray-500 relative">
+
+                        <div v-if="myFile.deleted" class="z-10 absolute left-0 bottom-0 right-0 py-2 px-3 text-sm bg-black text-white flex items-center justify-between">
+                          To be deleted
+                          <ArrowUturnLeftIcon
+                            @click="undoDelete(myFile)"
+                            class="size-4 cursor-pointer "
+                            />
+                        </div>
 
                         <button
                           @click="removeFile(myFile)"
@@ -198,18 +236,23 @@ function removeFile (myFile) {
                           <XMarkIcon class="size-5" />
                         </button>
 
-                        <img v-if="isImage(myFile.file)" :src="myFile.url"
-                        class="object-contain aspect-square">
+                        <img v-if="isImage(myFile.file || myFile)" :src="myFile.url"
+                        class="object-contain aspect-square"
+                          :class="myFile.deleted ? 'opacity-50' : '' ">
 
-                        <template v-else>
-                          <PaperClipIcon class="w-10 h-10 mb-3"/>
-                          <small class="w-[200px] break-words ">{{ myFile.file.name }}</small>
-                        </template>
+                        <div v-else class="flex justify-center items-center gap-3"
+                          :class="myFile.deleted ? 'opacity-50' : '' ">
+                          <PaperClipIcon class="w-10 h-10"/>
+                          <small class="w-[200px] break-words ">
+                            {{ (myFile.file || myFile).name }}
+                          </small>
+                        </div>
 
                       </div>
                     </template>
 
                   </div>
+
 
                 </div>
 

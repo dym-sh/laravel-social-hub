@@ -34,7 +34,7 @@ function deletePost() {
       <PostUserHeader :post="post"/>
       <div class="">
 
-        <Menu as="div" class="relative inline-block text-left">
+        <Menu as="div" class="z-10 relative inline-block text-left">
           <div>
             <MenuButton
               class="h-8 w-8 rounded-full hover:bg-black/5 transition flex items-center justify-center"
@@ -87,7 +87,7 @@ function deletePost() {
                       class="mr-2 h-5 w-5"
                       aria-hidden="true"
                     />
-                    Edit
+                    Delete
                   </button>
                 </MenuItem>
 
@@ -121,7 +121,7 @@ function deletePost() {
       <template v-for="(attachment, ind) of post.attachments.slice(0, 4)">
         <div class="group bg-blue-100 aspect-square flex flex-col items-center justify-center text-center text-gray-500 relative">
 
-          <div v-if="3 === ind" class="absolute top-0 bottom-0 left-0 right-0 z-10 bg-black/60 text-white flex items-center justify-center text-2xl">
+          <div v-if="3 === ind && 4 < post.attachments.length" class="absolute top-0 bottom-0 left-0 right-0 z-10 bg-black/60 text-white flex items-center justify-center text-2xl">
             +{{post.attachments.length - 4}} more
           </div>
 
