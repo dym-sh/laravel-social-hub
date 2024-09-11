@@ -12,7 +12,7 @@ const props = defineProps({
   post: Object
 })
 
-const emit = defineEmits(['editClick'])
+const emit = defineEmits(['editClick', 'attachmentClick'])
 
 function openEditModal() {
   emit('editClick', props.post)
@@ -25,6 +25,10 @@ function deletePost() {
     } )
 
   }
+}
+
+function openAttachment(ind) {
+  emit('attachmentClick', props.post, ind)
 }
 </script>
 
@@ -119,7 +123,9 @@ function deletePost() {
       : 'grid-cols-2'
     ]">
       <template v-for="(attachment, ind) of post.attachments.slice(0, 4)">
-        <div class="group bg-blue-100 aspect-square flex flex-col items-center justify-center text-center text-gray-500 relative">
+        <div
+          @click="openAttachment(ind)"
+          class="group bg-blue-100 aspect-square flex flex-col items-center justify-center text-center text-gray-500 relative">
 
           <div v-if="3 === ind && 4 < post.attachments.length" class="absolute top-0 bottom-0 left-0 right-0 z-10 bg-black/60 text-white flex items-center justify-center text-2xl">
             +{{post.attachments.length - 4}} more
@@ -131,13 +137,14 @@ function deletePost() {
             <ArrowDownTrayIcon class="size-4" />
           </a>
 
-          <img v-if="isImage(attachment)" :src="attachment.url"
+          <img v-if="isImage(attachment)"
+          :src="attachment.url"
           class="object-contain aspect-square">
 
-          <template v-else>
+          <div v-else>
             <PaperClipIcon class="size-12" />
             <small>{{ attachment.name }}</small>
-          </template>
+          </div>
 
         </div>
       </template>

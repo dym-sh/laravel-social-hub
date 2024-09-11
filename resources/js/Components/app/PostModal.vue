@@ -260,7 +260,6 @@ function undoDelete(myFile) {
                   <button
                     type="button"
                     class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 flex gap-2 items-center justify-center relative"
-                    @click="submit"
                   >
                     <PaperClipIcon class="size-4"/>
                     Attach files
