@@ -132,7 +132,7 @@ function openAttachment(ind) {
           </div>
 
           <!-- download button -->
-          <a :href="route('post.download', attachment)" class="z-20 opacity-0 group-hover:opacity-100 transition-all w-8 h-8 bg-gray-700 hover:bg-gray-800 rounded flex text-gray-100 items-center justify-center absolute right-2 top-2 cursor-pointer"
+          <a @click.stop :href="route('post.download', attachment)" class="z-20 opacity-0 group-hover:opacity-100 transition-all w-8 h-8 bg-gray-700 hover:bg-gray-800 rounded flex text-gray-100 items-center justify-center absolute right-2 top-2 cursor-pointer"
             >
             <ArrowDownTrayIcon class="size-4" />
           </a>
@@ -141,7 +141,7 @@ function openAttachment(ind) {
           :src="attachment.url"
           class="object-contain aspect-square">
 
-          <div v-else>
+          <div v-else class="flex flex-col justify-center items-center gap-3 p-3">
             <PaperClipIcon class="size-12" />
             <small>{{ attachment.name }}</small>
           </div>

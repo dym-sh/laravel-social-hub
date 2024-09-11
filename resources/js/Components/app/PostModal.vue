@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, Teleport, watch } from 'vue'
+import { computed, ref, Teleport, watch } from 'vue'
 import {
   TransitionRoot,
   TransitionChild,
@@ -7,10 +7,9 @@ import {
   DialogPanel,
   DialogTitle,
 } from '@headlessui/vue'
-import InputTextarea from '../InputTextarea.vue';
 import PostUserHeader from './PostUserHeader.vue';
 import { ArrowUturnLeftIcon, XMarkIcon } from '@heroicons/vue/24/solid'
-import { useForm } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3';
 import { ClassicEditor, Bold, Essentials, Italic, Paragraph } from 'ckeditor5';
 import 'ckeditor5/ckeditor5.css';
 import { PaperClipIcon } from '@heroicons/vue/24/solid';
@@ -31,13 +30,15 @@ const editorConfig = {
   plugins: [ Bold, Essentials, Italic, Paragraph ],
 }
 
+const attachmentExtensions = usePage().props.attachmentExtensions
+
 /** {
  * file: File,
- * mime: '',
  * url: '',
- * size:
 } */
 const attachmentFiles = ref([])
+const attachmentErrors = ref([])
+const showExtensionsText = ref(false)
 
 const computedAttachments = computed(
   () => {
@@ -85,6 +86,8 @@ function resetModal() {
   emit('update:modelValue', false)
   form.reset()
   attachmentFiles.value = []
+  showExtensionsText = false
+  attachmentErrors.value = []
   if(props.post.attachments) {
     props.post.attachments.forEach(file => {
       file.deleted = false
@@ -99,23 +102,45 @@ function submit() {
     form._method = 'PUT'
     form.post(route('post.update', props.post.id), {
       preserveScroll: true,
-      onSuccess: () => {
+      onSuccess: (res) => {
         closeModal()
+      },
+      onError: (errors) => {
+        processErrors(errors)
       }
     })
   } else {
     form.post(route('post.create'), {
       preserveScroll: true,
-      onSuccess: () => {
+      onSuccess: (res) => {
         closeModal()
+      },
+      onError: (errors) => {
+        processErrors(errors)
       }
     })
   }
 }
 
+function processErrors(errors) {
+  for( const key in errors ){
+    if( key.includes('.') ) {
+      const [, index] = key.split('.')
+      attachmentErrors.value[index] = errors[key]
+    }
+  }
+}
+
 async function onAttachmentsChoose( event ) {
-  console.log( event.target.files )
+  showExtensionsText.value = false
   for( const file of event.target.files ) {
+    let parts = file.name.split('.')
+    let ext = parts.pop().toLowerCase()
+
+    if(!attachmentExtensions.includes(ext)) {
+      showExtensionsText.value = true
+    }
+
     const myFile = {
       file,
       url : await readFile(file)
@@ -124,7 +149,6 @@ async function onAttachmentsChoose( event ) {
     attachmentFiles.value.push( myFile )
   }
   event.target.value = null
-  console.log(attachmentFiles.value)
 };
 
 async function readFile(file) {
@@ -214,13 +238,21 @@ function undoDelete(myFile) {
                     :config="editorConfig"
                   />
 
+                  <div v-if="showExtensionsText"
+                    class="border-l-4 border-amber-500 py-2 px-3 bg-amber-100 mt-3 text-gray-800">
+                    Files must be one of the following extensions:<br>
+                    <small>{{attachmentExtensions.join(', ')}}</small>
+                  </div>
+
                   <div class="grid gap-3 my-3" :class="[
                       1 === computedAttachments.length
                       ? 'grid-cols-1'
                       : 'grid-cols-2'
                     ]">
-                    <template v-for="(myFile, ind) of computedAttachments">
-                      <div class="group bg-blue-100 aspect-square flex flex-col items-center justify-center text-center text-gray-500 relative">
+                    <div v-for="(myFile, ind) of computedAttachments">
+                      <div
+                        class="group bg-blue-100 aspect-square flex flex-col items-center justify-center text-center text-gray-500 relative border-2"
+                        :class="attachmentErrors[ind] ? 'border-red-500' : ''">
 
                         <div v-if="myFile.deleted" class="z-10 absolute left-0 bottom-0 right-0 py-2 px-3 text-sm bg-black text-white flex items-center justify-between">
                           To be deleted
@@ -240,7 +272,7 @@ function undoDelete(myFile) {
                         class="object-contain aspect-square"
                           :class="myFile.deleted ? 'opacity-50' : '' ">
 
-                        <div v-else class="flex justify-center items-center gap-3"
+                        <div v-else class="flex flex-col justify-center items-center gap-3 p-3"
                           :class="myFile.deleted ? 'opacity-50' : '' ">
                           <PaperClipIcon class="w-10 h-10"/>
                           <small class="w-[200px] break-words ">
@@ -249,7 +281,10 @@ function undoDelete(myFile) {
                         </div>
 
                       </div>
-                    </template>
+                      <small class="text-red-500">
+                        {{attachmentErrors[ind]}}
+                      </small>
+                    </div>
 
                   </div>
 
