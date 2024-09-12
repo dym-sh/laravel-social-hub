@@ -38,7 +38,7 @@ const attachmentExtensions = usePage().props.attachmentExtensions
 } */
 const attachmentFiles = ref([])
 const attachmentErrors = ref([])
-const showExtensionsText = ref(false)
+const formErrors = ref({})
 
 const computedAttachments = computed(
   () => {
@@ -60,6 +60,20 @@ const props = defineProps({
 const show = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
+})
+
+const showExtensionsText = computed(() => {
+  for( let myFile of attachmentFiles.value ) {
+    const file = myFile.file
+    let parts = file.name.split('.')
+    let ext = parts.pop().toLowerCase()
+
+    if(!attachmentExtensions.includes(ext)) {
+      return true
+    }
+  }
+
+  return false
 })
 
 const emit = defineEmits(['update:modelValue', 'hide'])
@@ -85,8 +99,8 @@ function closeModal() {
 function resetModal() {
   emit('update:modelValue', false)
   form.reset()
+  formErrors.value = {}
   attachmentFiles.value = []
-  showExtensionsText = false
   attachmentErrors.value = []
   if(props.post.attachments) {
     props.post.attachments.forEach(file => {
@@ -123,6 +137,7 @@ function submit() {
 }
 
 function processErrors(errors) {
+  formErrors.value = errors
   for( const key in errors ){
     if( key.includes('.') ) {
       const [, index] = key.split('.')
@@ -132,15 +147,7 @@ function processErrors(errors) {
 }
 
 async function onAttachmentsChoose( event ) {
-  showExtensionsText.value = false
   for( const file of event.target.files ) {
-    let parts = file.name.split('.')
-    let ext = parts.pop().toLowerCase()
-
-    if(!attachmentExtensions.includes(ext)) {
-      showExtensionsText.value = true
-    }
-
     const myFile = {
       file,
       url : await readFile(file)
@@ -242,6 +249,11 @@ function undoDelete(myFile) {
                     class="border-l-4 border-amber-500 py-2 px-3 bg-amber-100 mt-3 text-gray-800">
                     Files must be one of the following extensions:<br>
                     <small>{{attachmentExtensions.join(', ')}}</small>
+                  </div>
+
+                  <div v-if="formErrors.attachments"
+                    class="border-l-4 border-red-500 py-2 px-3 bg-red-100 mt-3 text-gray-800">
+                    {{formErrors.attachments}}
                   </div>
 
                   <div class="grid gap-3 my-3" :class="[

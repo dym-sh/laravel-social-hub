@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rules\File;
 
 class StorePostRequest extends FormRequest
@@ -32,10 +33,22 @@ class StorePostRequest extends FormRequest
     {
         return [
             'body' => ['nullable', 'string'],
-            'attachments' => 'array|max:50',
+            'attachments' => [
+                'array',
+                'max:50',
+                function ($attribute, $value, $fail) {
+                    $totalSize = collect($value)
+                        ->sum(fn (UploadedFile $file) => $file->getSize()
+                    );
+                    dd($totalSize);
+                    if($totalSize > 1024*1024*1024) {
+                        $fail('The total size of all files must not exceed 1 GB');
+                    }
+                },
+            ],
             'attachments.*' => [
-                'file',
-                File::types(self::$extensions)->max(500 * 1024 * 1024)
+                'file'
+                ,File::types(self::$extensions)
             ],
             'user_id' => ['numeric'],
         ];
@@ -52,7 +65,9 @@ class StorePostRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'attachments.*' => 'Invalid file'
+            'attachments.*.file' => 'Each attachment must be a file',
+            'attachments.*.mimes' => 'Invalid filetype for attachment.',
+            'attachments.*.max' => 'Attachment size cant be more than 500 MB',
         ];
     }
 }
