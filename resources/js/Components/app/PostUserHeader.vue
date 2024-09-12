@@ -16,7 +16,7 @@ defineProps({
     <a href="javascript:void(0)">
       <img
         :src="post.user.avatar_path"
-        class="w-[32px] rounded-full transition-all border-2 hover:border-blue-400"
+        class="w-[32px] rounded-full transition-all border-2 hover:border-blue-400 aspect-square"
         >
     </a>
     <div>

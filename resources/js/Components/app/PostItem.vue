@@ -4,9 +4,17 @@ import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import { PencilIcon, TrashIcon, EllipsisVerticalIcon } from '@heroicons/vue/24/solid'
 import { ArrowDownTrayIcon, ChatBubbleLeftRightIcon, HandThumbUpIcon, PaperClipIcon } from '@heroicons/vue/24/outline';
 import PostUserHeader from './PostUserHeader.vue';
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import { isImage } from '@/helpers';
 import axiosClient from '@/axiosClient.js'
+import InputTextarea from '../InputTextarea.vue';
+import IndigoButton from './IndigoButton.vue';
+import { ref } from 'vue';
+import ReadMoreReadLess from './ReadMoreReadLess.vue';
+
+const newCommentText = ref('')
+
+const authUser = usePage().props.auth.user
 
 const props = defineProps({
   post: Object
@@ -31,7 +39,7 @@ function openAttachment(ind) {
   emit('attachmentClick', props.post, ind)
 }
 
-function sendReaction () {
+function sendReaction() {
   axiosClient.post( route( 'post.reaction', props.post), {
     reaction: 'like'
   }).then( ({data}) => {
@@ -40,6 +48,20 @@ function sendReaction () {
     props.post.num_of_reactions
       = data.num_of_reactions
   })
+}
+
+function createComment() {
+  axiosClient.post( route( 'post.comment.create', props.post), {
+    comment: newCommentText.value
+  }).then( ({data}) => {
+    newCommentText.value = ''
+    props.post.comments.unshift(data)
+    props.post.num_of_comments++
+  })
+}
+
+function toggleCommentsSection() {
+
 }
 </script>
 
@@ -114,19 +136,7 @@ function sendReaction () {
       </div>
     </div>
     <div class="mb-3">
-      <Disclosure v-slot="{ open }">
-        <div v-if="!open" class="ck-content-output" v-html="post.body.substring(0, 100)"></div>
-        <template v-if="post.body.length >= 200">
-          <DisclosurePanel class="px-4 pb-2 pt-4">
-            <div class="ck-content-output" v-html="post.body"></div>
-          </DisclosurePanel>
-          <div class="flex justify-end">
-            <DisclosureButton>
-              <span class="text-blue-400 hover:underline">{{ open ? 'Read less' : 'Read more' }}</span>
-            </DisclosureButton>
-          </div>
-        </template>
-      </Disclosure>
+      <ReadMoreReadLess :content="post.body" />
     </div>
     <div class="grid gap-3 mb-3" :class="[
       1 === post.attachments.length
@@ -161,24 +171,86 @@ function sendReaction () {
       </template>
 
     </div>
-    <div class="flex gap-2 mt-2">
-      <button
-        @click="sendReaction"
-        class="text-gray-800 flex gap-1 items-center py-2 px-4 justify-center  rounded-lg flex-1"
-        :class="[
-          post.current_user_has_reaction
-          ? 'bg-sky-100 hover:bg-sky-200'
-          : 'bg-gray-100 hover:bg-gray-200'
-        ]">
-        <HandThumbUpIcon class="size-4" />
-        <span clas="mr-2">{{post.num_of_reactions}}</span>
-        {{ post.current_user_has_reaction ? 'Unlike' : 'Like'}}
-      </button>
-      <button class="text-gray-800 flex gap-1 items-center py-2 px-4 justify-center bg-gray-100 hover:bg-gray-200 rounded-lg flex-1">
-        <ChatBubbleLeftRightIcon class="size-4" />
-        Comment
-      </button>
-    </div>
+
+    <Disclosure v-slot="{ open }">
+      <div class="flex gap-2 mt-2">
+        <button
+          @click="sendReaction"
+          class="text-gray-800 flex gap-1 items-center py-2 px-4 justify-center  rounded-lg flex-1"
+          :class="[
+            post.current_user_has_reaction
+            ? 'bg-sky-100 hover:bg-sky-200'
+            : 'bg-gray-100 hover:bg-gray-200'
+          ]">
+          <HandThumbUpIcon class="size-5" />
+          <div class="flex gap-2">
+            <span>{{post.num_of_reactions}}</span>
+            <span>{{ post.current_user_has_reaction ? 'Unlike' : 'Like'}}</span>
+          </div>
+        </button>
+        <DisclosureButton
+        class="fletext-gray-800 flex gap-1 items-center py-2 px-4 justify-center bg-gray-100 hover:bg-gray-200 rounded-lg flex-1"
+      >
+          <ChatBubbleLeftRightIcon class="size-5" />
+          <div class="flex gap-2">
+            <span>{{post.num_of_comments}}</span>
+            <span>Comment</span>
+          </div>
+
+        </DisclosureButton>
+      </div>
+
+      <DisclosurePanel>
+        <div class="flex items-center gap-2 mb-3 mt-3">
+          <a href="javascript:void(0)">
+            <img
+              :src="authUser.avatar_path"
+              class="w-[32px] rounded-full transition-all border-2 hover:border-blue-400 aspect-square"
+              >
+          </a>
+          <div class="flex flex-1">
+            <InputTextarea
+              v-model="newCommentText"
+              placeholder="Enter your comment here"
+              rows="1"
+              class="w-full resize-none max-h-[160px] rounded-r-none"
+              />
+            <IndigoButton
+              @click="createComment"
+              class="w-[100px] rounded-l-none"
+              >Submit</IndigoButton>
+          </div>
+        </div>
+        <div>
+          <div v-for="comment of post.comments" :key="comment.id" class="mb-4">
+            <div class="flex gap-2">
+              <a href="javascript:void(0)" class="min-w-[32px]">
+                <img
+                  :src="comment.user.avatar_path"
+                  class="w-[32px] rounded-full transition-all border-2 hover:border-blue-400 aspect-square"
+                  >
+              </a>
+              <div class="flex flex-col">
+                <div>
+                  <h4 class="font-bold">
+                    <a href="javascript:void(0)" class="hover:underline">
+                      {{comment.user.name}}
+                    </a>
+                  </h4>
+                  <small class="text-gray-400 text-xs">{{comment.updated_at}}</small>
+                </div>
+                <ReadMoreReadLess
+                  :content="comment.comment"
+                  content-class="text-sm"
+                  />
+              </div>
+            </div>
+          </div>
+        </div>
+      </DisclosurePanel>
+    </Disclosure>
+
+
   </div>
 </template>
 
