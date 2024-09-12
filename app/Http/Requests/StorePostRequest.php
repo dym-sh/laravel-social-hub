@@ -40,7 +40,6 @@ class StorePostRequest extends FormRequest
                     $totalSize = collect($value)
                         ->sum(fn (UploadedFile $file) => $file->getSize()
                     );
-                    dd($totalSize);
                     if($totalSize > 1024*1024*1024) {
                         $fail('The total size of all files must not exceed 1 GB');
                     }
